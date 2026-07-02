@@ -8,14 +8,14 @@ Relacionar casos de uso, pantallas, entidades y reglas para asegurar consistenci
 
 | Caso De Uso | Pantalla Principal | Entidades | Reglas Asociadas |
 | --- | --- | --- | --- |
-| CU01. Registrar alumno | Formulario Alumno | Alumno, Sala | alumno debe tener nombre, apellido y una unica sala |
-| CU02. Editar alumno | Formulario Alumno | Alumno, Sala | mantener asignacion valida a una sala |
+| CU01. Registrar alumno | Panel Profesor, Formulario Alumno | Alumno, Sala, Profesor | el profesor puede registrar alumnos desde su pantalla y asociarlos a la sala correspondiente |
+| CU02. Editar alumno | Panel Profesor, Formulario Alumno | Alumno, Sala, Profesor | el profesor puede editar alumnos de sus salas y mantener asociacion valida del alumno con su sala |
 | CU03. Buscar alumno | Lista De Alumnos | Alumno, Sala | busqueda por nombre y apellido |
-| CU04. Crear sala | Formulario Sala | Sala, Profesor | sala debe tener profesor y horario valido |
-| CU05. Asignar profesor y horario a sala | Formulario Sala, Detalle De Sala | Sala, Profesor | una sala tiene un profesor asignado y horario valido |
-| CU06. Iniciar toma de asistencia | Toma De Asistencia | TomaAsistencia, Sala, Profesor | solo una toma por sala y fecha; solo profesor asignado; profesor habilitado; dentro de horario |
+| CU04. Crear sala | Formulario Sala | Sala, Profesor | sala debe tener al menos un profesor y horario valido |
+| CU05. Asignar profesor y horario a sala | Formulario Sala, Detalle De Sala | Sala, Profesor | una sala puede tener uno o mas profesores asignados y horario valido |
+| CU06. Iniciar toma de asistencia | Toma De Asistencia | TomaAsistencia, Sala, Profesor | solo una toma por sala y fecha; solo profesor asignado a la sala; profesor habilitado; dentro de horario |
 | CU07. Marcar presentes | Toma De Asistencia | TomaAsistencia, DetalleAsistencia, Alumno | solo alumnos de la sala; ausentes por complemento o detalle en falso |
-| CU08. Consultar historial | Historial | TomaAsistencia, DetalleAsistencia, Sala, Alumno | consulta por fecha y sala; visibilidad segun rol |
+| CU08. Consultar historial | Historial | TomaAsistencia, DetalleAsistencia, Sala, Alumno | consulta por fecha y sala; visibilidad segun rol; modificacion del profesor solo el mismo dia |
 | CU09. Cambiar credencial de profesor | Gestion De Profesores, Cambiar Clave | Profesor, CredencialProfesor | clave protegida; no mostrar clave actual; reemplazo total de credencial |
 | CU10. Inhabilitar profesor | Gestion De Profesores | Profesor | profesor inhabilitado no puede iniciar sesion ni crear tomas |
 
@@ -23,11 +23,11 @@ Relacionar casos de uso, pantallas, entidades y reglas para asegurar consistenci
 
 ### R01
 
-Cada alumno pertenece a una unica sala.
+El alumno puede ser dado de alta por un profesor desde su pantalla y queda asociado a la sala correspondiente.
 
 ### R02
 
-Cada sala tiene un profesor asignado.
+Cada sala puede tener uno o mas profesores asignados.
 
 ### R03
 
@@ -39,7 +39,7 @@ Solo puede existir una toma por sala y fecha.
 
 ### R05
 
-La toma la crea el profesor asignado a la sala.
+La toma la crea uno de los profesores asignados a la sala.
 
 ### R06
 

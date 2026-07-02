@@ -9,13 +9,15 @@ Traducir el modelo conceptual del sistema a una estructura logica persistible en
 - Se propone una base de datos relacional.
 - El administrador no requiere tabla propia en la primera etapa, porque su autenticacion depende de configuracion externa.
 - Las claves de profesores se almacenan protegidas.
+- Los alumnos pueden darse de alta desde la pantalla del profesor y quedan asociados a una sala al momento de su registro.
 - La ausencia se puede deducir por complemento, pero para simplificar consultas y correcciones conviene persistir el detalle de asistencia por alumno.
 
 ## Diagrama Entidad Relacion
 
 ```mermaid
 erDiagram
-    PROFESOR ||--o{ SALA : asigna
+    PROFESOR ||--o{ SALA_PROFESOR : participa
+    SALA ||--o{ SALA_PROFESOR : define
     SALA ||--o{ ALUMNO : contiene
     SALA ||--o{ TOMA_ASISTENCIA : genera
     PROFESOR ||--o{ TOMA_ASISTENCIA : crea
@@ -41,10 +43,14 @@ erDiagram
     SALA {
         int id PK
         string nombre
-        int profesor_id FK
         time hora_inicio
         time hora_fin
         boolean activa
+    }
+
+    SALA_PROFESOR {
+        int sala_id PK,FK
+        int profesor_id PK,FK
     }
 
     ALUMNO {
@@ -101,10 +107,16 @@ erDiagram
 | --- | --- | --- |
 | id | entero | PK |
 | nombre | texto | not null, unique si se desea evitar duplicados |
-| profesor_id | entero | FK -> PROFESOR.id, not null |
 | hora_inicio | time | not null |
 | hora_fin | time | not null |
 | activa | booleano | not null, default true |
+
+### SALA_PROFESOR
+
+| Campo | Tipo | Restricciones |
+| --- | --- | --- |
+| sala_id | entero | PK, FK -> SALA.id |
+| profesor_id | entero | PK, FK -> PROFESOR.id |
 
 ### ALUMNO
 
@@ -149,6 +161,7 @@ Restriccion recomendada:
 ## Reglas Que Debe Soportar La Base
 
 - Un alumno solo puede estar asociado a una sala a la vez.
+- Una sala puede tener uno o mas profesores asociados.
 - No puede existir mas de una toma por sala y fecha.
 - Una credencial pertenece a un unico profesor.
 - El detalle no debe repetir un mismo alumno dentro de la misma toma.
@@ -156,7 +169,7 @@ Restriccion recomendada:
 ## Indices Recomendados
 
 - indice por `ALUMNO(apellido, nombre)`
-- indice por `SALA(profesor_id)`
+- indice por `SALA_PROFESOR(profesor_id)`
 - indice por `TOMA_ASISTENCIA(sala_id, fecha)`
 - indice por `DETALLE_ASISTENCIA(alumno_id)`
 
@@ -164,4 +177,4 @@ Restriccion recomendada:
 
 - Agregar tabla de auditoria para cambios de asistencia.
 - Agregar tabla de sesiones o usuarios si el administrador pasa a autenticarse formalmente.
-- Agregar historial de asignacion de profesor por sala si se necesita trazabilidad temporal.
+- Agregar vigencia temporal en `SALA_PROFESOR` si se necesita trazabilidad historica de asignaciones.

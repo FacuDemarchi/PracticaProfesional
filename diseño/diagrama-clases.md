@@ -71,7 +71,7 @@ classDiagram
 
     Administrador "1" --> "0..*" Profesor : gestiona
     Administrador "1" --> "0..*" CredencialProfesor : define
-    Profesor "1" --> "0..*" Sala : asignado a
+    Profesor "0..*" --> "1..*" Sala : asignado a
     Sala "1" --> "0..*" Alumno : contiene
     Sala "1" --> "0..*" TomaAsistencia : genera
     Profesor "1" --> "0..*" TomaAsistencia : crea
@@ -83,8 +83,8 @@ classDiagram
 ## Criterios De Diseno
 
 - `Administrador` se modela como rol operativo y no como usuario persistido obligatorio, porque su clave vive fuera de la base de datos.
-- `Profesor` puede estar asignado a varias salas, tal como ya fue definido en el analisis y en Alloy.
-- `Alumno` pertenece a una unica sala en la primera etapa.
+- `Profesor` puede estar asignado a varias salas y una sala puede tener varios profesores asignados.
+- `Alumno` puede darse de alta desde la pantalla del profesor y queda asociado a la sala desde la que fue registrado.
 - `TomaAsistencia` representa la cabecera de una asistencia por sala y fecha.
 - `DetalleAsistencia` baja a nivel logico una necesidad de persistencia: aunque Alloy usa conjunto de presentes, en base de datos conviene registrar una fila por alumno incluido en la toma.
 - `CredencialProfesor` separa la identidad del profesor del secreto almacenado.

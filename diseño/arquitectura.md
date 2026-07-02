@@ -1,96 +1,107 @@
-# Arquitectura De Modulos Y Capas
+# Arquitectura
 
 ## Objetivo
 
-Definir una arquitectura simple, coherente con el alcance actual del sistema y suficiente para una primera implementacion.
+Definir una unica arquitectura de referencia para el sistema de asistencia, en un nivel suficiente para guiar la implementacion sin duplicar contenido.
 
-## Diagrama General
+## Stack Sugerido
+
+- backend: `Node.js` + `Express`;
+- frontend: interfaz web simple para administrador y profesor;
+- base de datos: `PostgreSQL` sobre `Neon`;
+- despliegue del backend y APIs: `Render`;
+- configuracion: archivo `.env`;
+- acceso a datos: repositorios con SQL directo.
+
+## Vista General
 
 ```mermaid
 flowchart TD
-    A[Interfaz Administrador] --> B[Aplicacion]
-    P[Interfaz Profesor] --> B[Aplicacion]
-
-    B --> AU[Modulo De Autenticacion]
-    B --> AL[Modulo De Alumnos]
-    B --> SA[Modulo De Salas]
-    B --> AS[Modulo De Asistencia]
-    B --> PR[Modulo De Profesores]
-
-    AU --> D[Dominio Y Reglas]
-    AL --> D
-    SA --> D
-    AS --> D
-    PR --> D
-
-    D --> R[Repositorios]
-    R --> DB[(Base De Datos)]
-    AU --> ENV[Variable De Entorno\nClave Admin]
+    UIA[Interfaz Administrador] --> HTTP[Controladores]
+    UIP[Interfaz Profesor] --> HTTP
+    HTTP --> APP[Servicios]
+    APP --> DOM[Dominio]
+    APP --> REP[Repositorios]
+    REP --> DB[(Base De Datos)]
+    APP --> AUTH[Autenticacion]
+    AUTH --> ENV[ADMIN_PASSWORD]
+    AUTH --> DB
 ```
 
 ## Capas
 
-### 1. Presentacion
+- `Presentacion`: muestra pantallas y recibe formularios.
+- `Controladores`: traducen requests y delegan en servicios.
+- `Servicios`: implementan casos de uso y validan permisos.
+- `Dominio`: concentra reglas de negocio.
+- `Persistencia`: encapsula consultas y transacciones.
 
-- Pantallas de administrador.
-- Pantallas de profesor.
-- Formularios de alumnos, salas, profesores y asistencia.
+## Modulos
 
-### 2. Aplicacion
+- `Autenticacion`: login unificado para administrador y profesor, con validacion prioritaria de admin y bloqueo de profesores inhabilitados.
+- `Alumnos`: alta, edicion y busqueda; el profesor puede crear y editar alumnos desde su pantalla segun la sala.
+- `Salas`: alta, horario y asignacion de uno o mas profesores.
+- `Asistencia`: crear toma, registrar presentes, consultar historial y corregir por administrador.
+- `Profesores`: listado, cambio de clave, habilitacion e inhabilitacion.
 
-- Orquesta casos de uso.
-- Valida permisos segun rol.
-- Coordina lecturas y escrituras sobre repositorios.
+## Reglas Centrales
 
-### 3. Dominio
+- un alumno puede ser registrado por un profesor y quedar asociado a la sala desde la que se lo crea;
+- el profesor puede editar alumnos de sus salas segun reglas de aplicacion;
+- una sala puede tener uno o mas profesores asignados;
+- solo existe una toma por sala y fecha;
+- la toma la crea uno de los profesores asignados a la sala;
+- la toma debe realizarse dentro del horario de la sala;
+- el profesor puede modificar una toma solo durante el mismo dia;
+- despues de esa fecha, solo el administrador puede modificarla;
+- un profesor inhabilitado no puede iniciar sesion ni operar.
 
-- Contiene entidades, reglas de negocio y validaciones centrales.
-- Hace cumplir unicidad de toma por sala y fecha.
-- Restringe la toma al profesor asignado y al horario valido.
+## Estructura Sugerida
 
-### 4. Infraestructura
+```text
+src/
+  controllers/
+  services/
+  domain/
+  repositories/
+  middleware/
+  db/
+  views/
+  config/
+```
 
-- Persistencia en base de datos.
-- Lectura de variable de entorno para clave de administrador.
-- Cifrado o hash de claves de profesores.
+## Endpoints Base
 
-## Modulos Funcionales
+- `POST /login`
+- `GET /alumnos`
+- `POST /alumnos`
+- `GET /salas`
+- `POST /salas`
+- `POST /asistencias`
+- `GET /asistencias/historial`
+- `POST /profesores/:id/cambiar-clave`
+- `POST /profesores/:id/habilitacion`
 
-### Modulo De Autenticacion
+## Persistencia Esperada
 
-- valida acceso de administrador contra variable de entorno;
-- valida acceso de profesor contra clave protegida almacenada;
-- bloquea acceso a profesores inhabilitados.
+- `profesor`
+- `credencial_profesor`
+- `sala`
+- `sala_profesor`
+- `alumno`
+- `toma_asistencia`
+- `detalle_asistencia`
 
-### Modulo De Alumnos
+## Infraestructura
 
-- alta, edicion y busqueda;
-- asignacion a una sala;
-- consulta por nombre y apellido.
-
-### Modulo De Salas
-
-- alta de sala;
-- asignacion de profesor;
-- definicion de horario.
-
-### Modulo De Asistencia
-
-- inicio de toma;
-- registro de presentes;
-- consulta de historial;
-- eventual correccion por administrador.
-
-### Modulo De Profesores
-
-- alta logica o administracion de docentes;
-- cambio de clave;
-- habilitacion e inhabilitacion;
-- consulta de salas asignadas.
+- el backend se despliega en `Render`;
+- la base de datos PostgreSQL se aloja en `Neon`;
+- la aplicacion se conecta mediante `DATABASE_URL` y otras variables de entorno;
+- `schema.sql` se aplica sobre la base de datos de `Neon`.
 
 ## Decisiones Relevantes
 
-- Se separa autenticacion de administrador y de profesores.
-- La logica de permisos no queda en la interfaz, sino en la capa de aplicacion y dominio.
-- El modelo soporta crecimiento futuro sin romper el alcance actual.
-- No se incorpora aun integracion externa ni mensajeria.
+- la autenticacion de administrador y profesores se mantiene separada;
+- las validaciones criticas quedan del lado del servidor;
+- la tabla `sala_profesor` resuelve la asignacion multiple de profesores por sala;
+- la arquitectura prioriza simplicidad y deja abierta una evolucion futura hacia auditoria o una API mas formal.
