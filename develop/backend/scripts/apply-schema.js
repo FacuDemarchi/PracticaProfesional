@@ -7,7 +7,7 @@ dotenv.config();
 
 const schemaPath =
   process.env.SCHEMA_PATH ||
-  path.resolve(__dirname, "../../diseño/schema.sql");
+  path.resolve(__dirname, "../../../diseño/schema.sql");
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {

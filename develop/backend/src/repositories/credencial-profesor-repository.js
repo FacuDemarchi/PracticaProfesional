@@ -8,6 +8,12 @@ async function findCredencialByProfesorId(profesorId) {
   return result.rows[0];
 }
 
+async function findAllCredenciales() {
+  const result = await pool.query("select * from credencial_profesor");
+  return result.rows;
+}
+
 module.exports = {
   findCredencialByProfesorId,
+  findAllCredenciales,
 };

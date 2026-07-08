@@ -34,6 +34,11 @@ async function findAlumnosByProfesorId(profesorId, search = null) {
   return result.rows;
 }
 
+async function findAlumnosBySalaId(salaId) {
+  const result = await pool.query("select * from alumno where sala_id = $1 and activo = true order by apellido, nombre", [salaId]);
+  return result.rows;
+}
+
 async function findAlumnoById(id) {
   const result = await pool.query("select * from alumno where id = $1", [id]);
   return result.rows[0];
@@ -58,6 +63,7 @@ async function updateAlumno(id, nombre, apellido, salaId, activo) {
 module.exports = {
   findAllAlumnos,
   findAlumnosByProfesorId,
+  findAlumnosBySalaId,
   findAlumnoById,
   createAlumno,
   updateAlumno,

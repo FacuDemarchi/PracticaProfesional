@@ -2,19 +2,19 @@ const { login } = require("../services/auth-service");
 
 async function handleLogin(req, res) {
   try {
-    const { username, password } = req.body;
+    const { password } = req.body;
 
-    if (!username || !password) {
+    if (!password) {
       return res
         .status(400)
-        .json({ ok: false, message: "Nombre de usuario y clave son requeridos" });
+        .json({ ok: false, message: "Clave es requerida" });
     }
 
-    const result = await login(username, password);
+    const result = await login(password);
     if (!result) {
       return res
         .status(401)
-        .json({ ok: false, message: "Credenciales invalidas" });
+        .json({ ok: false, message: "Clave incorrecta" });
     }
 
     return res.status(200).json({

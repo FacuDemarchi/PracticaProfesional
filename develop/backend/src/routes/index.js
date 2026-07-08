@@ -21,6 +21,14 @@ const {
   handleCreateAlumno,
   handleUpdateAlumno,
 } = require("../controllers/alumno-controller");
+const {
+  handleGetAllTomaAsistencias,
+  handleGetTomaAsistenciaById,
+  handleGetTomaAsistenciasBySalaId,
+  handleCreateOrUpdateTomaAsistencia,
+  handleDeleteTomaAsistencia,
+  handleGetAlumnosBySalaId,
+} = require("../controllers/asistencia-controller");
 const { authenticate } = require("../middleware/auth-middleware");
 
 const router = express.Router();
@@ -44,5 +52,12 @@ router.get("/alumnos", authenticate, handleGetAlumnos);
 router.get("/alumnos/:id", authenticate, handleGetAlumnoById);
 router.post("/alumnos", authenticate, handleCreateAlumno);
 router.put("/alumnos/:id", authenticate, handleUpdateAlumno);
+router.get("/salas/:salaId/alumnos", authenticate, handleGetAlumnosBySalaId);
+
+router.get("/asistencias", authenticate, handleGetAllTomaAsistencias);
+router.get("/asistencias/:id", authenticate, handleGetTomaAsistenciaById);
+router.get("/salas/:salaId/asistencias", authenticate, handleGetTomaAsistenciasBySalaId);
+router.post("/asistencias", authenticate, handleCreateOrUpdateTomaAsistencia);
+router.delete("/asistencias/:id", authenticate, handleDeleteTomaAsistencia);
 
 module.exports = { router };

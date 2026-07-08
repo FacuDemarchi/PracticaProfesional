@@ -10,9 +10,9 @@ const { findSalaById } = require("../repositories/sala-repository");
 const { isProfesorAssignedToSala } = require("../repositories/sala-profesor-repository");
 
 async function getAlumnos(user, search = null) {
-  if (user.type === UserTypes.ADMIN) {
+  if (user.role === UserTypes.ADMIN) {
     return await findAllAlumnos(search);
-  } else if (user.type === UserTypes.PROFESOR) {
+  } else if (user.role === UserTypes.PROFESOR) {
     return await findAlumnosByProfesorId(user.profesorId, search);
   }
   throw new Error("Tipo de usuario no autorizado");
@@ -24,9 +24,9 @@ async function getAlumnoById(user, id) {
     return null;
   }
 
-  if (user.type === UserTypes.ADMIN) {
+  if (user.role === UserTypes.ADMIN) {
     return alumno;
-  } else if (user.type === UserTypes.PROFESOR) {
+  } else if (user.role === UserTypes.PROFESOR) {
     const isAssigned = await isProfesorAssignedToSala(user.profesorId, alumno.sala_id);
     if (isAssigned) {
       return alumno;
@@ -41,7 +41,7 @@ async function createNewAlumno(user, nombre, apellido, salaId, activo = true) {
     throw new Error("La sala no existe");
   }
 
-  if (user.type === UserTypes.PROFESOR) {
+  if (user.role === UserTypes.PROFESOR) {
     const isAssigned = await isProfesorAssignedToSala(user.profesorId, salaId);
     if (!isAssigned) {
       throw new Error("No tienes permiso para crear alumnos en esta sala");
@@ -57,7 +57,7 @@ async function updateExistingAlumno(user, id, nombre, apellido, salaId, activo) 
     return null;
   }
 
-  if (user.type === UserTypes.PROFESOR) {
+  if (user.role === UserTypes.PROFESOR) {
     const isAssignedToOldSala = await isProfesorAssignedToSala(user.profesorId, existingAlumno.sala_id);
     const isAssignedToNewSala = await isProfesorAssignedToSala(user.profesorId, salaId);
     if (!isAssignedToOldSala || !isAssignedToNewSala) {

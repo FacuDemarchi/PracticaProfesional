@@ -6,7 +6,6 @@ import type { LoginCredentials } from '../types';
 
 export const Login = () => {
   const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -29,7 +28,7 @@ export const Login = () => {
         navigate('/profesor');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      setError(err instanceof Error ? err.message : 'Clave incorrecta');
     } finally {
       setIsLoading(false);
     }
@@ -67,27 +66,8 @@ export const Login = () => {
             </div>
           )}
           <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="username" style={{ display: 'block', marginBottom: '5px' }}>
-              Usuario
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={credentials.username}
-              onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: '20px' }}>
             <label htmlFor="password" style={{ display: 'block', marginBottom: '5px' }}>
-              Contraseña
+              Clave de Acceso
             </label>
             <input
               id="password"

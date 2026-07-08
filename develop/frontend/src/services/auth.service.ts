@@ -1,6 +1,6 @@
 import type { LoginCredentials, LoginResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
@@ -13,8 +13,8 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error de autenticación' }));
-      throw new Error(errorData.message || 'Error de autenticación');
+      const errorData = await response.json().catch(() => ({ message: 'Clave incorrecta' }));
+      throw new Error(errorData.message || 'Clave incorrecta');
     }
 
     return await response.json();

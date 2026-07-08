@@ -10,18 +10,23 @@ const {
 const {
   findProfesoresBySalaId,
   setProfesoresToSala,
+  findSalasByProfesorId,
 } = require("../repositories/sala-profesor-repository");
 const { pool } = require("../db/pool");
 
 function checkAdmin(user) {
-  if (user.type !== UserTypes.ADMIN) {
+  if (user.role !== UserTypes.ADMIN) {
     throw new Error("No autorizado: se requiere permiso de administrador");
   }
 }
 
 async function getAllSalas(user) {
-  checkAdmin(user);
-  const salas = await findAllSalas();
+  let salas;
+  if (user.role === UserTypes.ADMIN) {
+    salas = await findAllSalas();
+  } else {
+    salas = await findSalasByProfesorId(user.profesorId);
+  }
   const salasConProfesores = [];
   for (const sala of salas) {
     const profesores = await findProfesoresBySalaId(sala.id);
@@ -31,9 +36,18 @@ async function getAllSalas(user) {
 }
 
 async function getSalaById(user, id) {
-  checkAdmin(user);
-  const sala = await findSalaById(id);
+  let sala = await findSalaById(id);
   if (!sala) return null;
+  
+  if (user.role === UserTypes.PROFESOR) {
+    // Verify profesor has access to this sala
+    const salasProfesor = await findSalasByProfesorId(user.profesorId);
+    const hasAccess = salasProfesor.some(s => s.id === id);
+    if (!hasAccess) {
+      throw new Error("No autorizado: no tienes acceso a esta sala");
+    }
+  }
+  
   const profesores = await findProfesoresBySalaId(id);
   return { ...sala, profesores };
 }

@@ -11,7 +11,7 @@ const { findCredencialByProfesorId } = require("../repositories/credencial-profe
 const { pool } = require("../db/pool");
 
 function checkAdmin(user) {
-  if (user.type !== UserTypes.ADMIN) {
+  if (user.role !== UserTypes.ADMIN) {
     throw new Error("No autorizado: se requiere permiso de administrador");
   }
 }
