@@ -4,10 +4,26 @@ const { env } = require("./config/env");
 const { router } = require("./routes");
 
 const app = express();
+const allowedOrigins = env.frontendUrl
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: env.frontendUrl,
+    origin: (origin, callback) => {
+      // Permite requests sin Origin, por ejemplo health checks o herramientas de servidor.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+    },
     credentials: true,
   })
 );
