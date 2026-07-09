@@ -16,6 +16,14 @@ async function findSalasByProfesorId(profesorId) {
   return result.rows;
 }
 
+async function isProfesorAssignedToSala(profesorId, salaId) {
+  const result = await pool.query(
+    "select 1 from sala_profesor where profesor_id = $1 and sala_id = $2 limit 1",
+    [profesorId, salaId]
+  );
+  return result.rowCount > 0;
+}
+
 async function addProfesorToSala(salaId, profesorId) {
   const result = await pool.query(
     "insert into sala_profesor (sala_id, profesor_id) values ($1, $2) returning *",
@@ -58,6 +66,7 @@ async function setProfesoresToSala(salaId, profesorIds) {
 module.exports = {
   findProfesoresBySalaId,
   findSalasByProfesorId,
+  isProfesorAssignedToSala,
   addProfesorToSala,
   removeProfesorFromSala,
   setProfesoresToSala,
