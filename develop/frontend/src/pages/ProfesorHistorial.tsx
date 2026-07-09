@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useSession } from '../contexts/SessionContext';
 import { apiService } from '../services/api.service';
 import type { Sala, TomaAsistencia } from '../types';
 
 export const ProfesorHistorial = () => {
   const { token } = useSession();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const salaIdParam = searchParams.get('salaId');
   const [salas, setSalas] = useState<Sala[]>([]);
@@ -22,9 +21,10 @@ export const ProfesorHistorial = () => {
       if (!token) return;
       try {
         const response = await apiService.getSalas(token);
-        setSalas(response.data || []);
-        if (response.data?.length > 0 && !selectedSalaId) {
-          setSelectedSalaId(response.data[0].id);
+        const salasData = response.data ?? [];
+        setSalas(salasData);
+        if (salasData.length > 0 && !selectedSalaId) {
+          setSelectedSalaId(salasData[0].id);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar las salas');

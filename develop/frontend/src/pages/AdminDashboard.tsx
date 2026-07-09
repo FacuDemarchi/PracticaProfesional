@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export const AdminDashboard = () => {
   const { user, logout } = useSession();
   const navigate = useNavigate();
+  const displayName = user?.nombre || 'Administrador';
 
   const handleLogout = () => {
     logout();
@@ -13,7 +14,7 @@ export const AdminDashboard = () => {
   return (
     <div style={{ padding: '20px' }}>
       <h1>Panel Administrador</h1>
-      <p>Bienvenido, {user?.nombre || 'Administrador'}!</p>
+      <p>Bienvenido, {displayName}!</p>
       <button onClick={handleLogout} style={{ marginTop: '20px', padding: '10px 20px' }}>
         Cerrar Sesión
       </button>

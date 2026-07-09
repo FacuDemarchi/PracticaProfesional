@@ -5,6 +5,8 @@ export const ProfesorLayout = () => {
   const { user, logout } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+  const displayName =
+    user?.nombre ? `${user.nombre} ${user.apellido || ''}`.trim() : 'Profesor';
 
   const handleLogout = () => {
     logout();
@@ -22,9 +24,7 @@ export const ProfesorLayout = () => {
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h1 style={styles.title}>Panel Profesor</h1>
-          <p style={styles.welcome}>
-            Bienvenido, {user?.nombre ? `${user.nombre} ${user.apellido || ''}` : 'Profesor'}
-          </p>
+          <p style={styles.welcome}>Bienvenido, {displayName}</p>
         </div>
         <button onClick={handleLogout} style={styles.logoutBtn}>
           Cerrar Sesión

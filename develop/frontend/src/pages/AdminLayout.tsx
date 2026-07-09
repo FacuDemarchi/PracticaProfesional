@@ -5,6 +5,7 @@ export const AdminLayout = () => {
   const { user, logout } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+  const displayName = user?.nombre || 'Administrador';
 
   const handleLogout = () => {
     logout();
@@ -23,7 +24,7 @@ export const AdminLayout = () => {
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <h1 style={styles.title}>Panel Administrador</h1>
-          <p style={styles.welcome}>Bienvenido, {user?.nombre || 'Administrador'}</p>
+          <p style={styles.welcome}>Bienvenido, {displayName}</p>
         </div>
         <button onClick={handleLogout} style={styles.logoutBtn}>
           Cerrar Sesión

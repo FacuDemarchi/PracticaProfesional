@@ -3,6 +3,8 @@ export type UserRole = 'admin' | 'profesor';
 export interface User {
   role: UserRole;
   profesorId?: number;
+  nombre?: string;
+  apellido?: string;
 }
 
 export interface LoginCredentials {
