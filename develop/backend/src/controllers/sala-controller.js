@@ -41,11 +41,28 @@ async function handleGetSalaById(req, res) {
 
 async function handleCreateSala(req, res) {
   try {
-    const { nombre, horaInicio, horaFin, profesorIds, activa } = req.body;
-    if (!nombre || !horaInicio || !horaFin || !profesorIds) {
+    const {
+      nombre,
+      horaInicio,
+      horaFin,
+      hora_inicio,
+      hora_fin,
+      profesorIds,
+      activa,
+    } = req.body;
+    const horaInicioValue = horaInicio || hora_inicio;
+    const horaFinValue = horaFin || hora_fin;
+    if (!nombre || !horaInicioValue || !horaFinValue || !profesorIds) {
       return res.status(400).json({ ok: false, message: "Nombre, horario y profesores son requeridos" });
     }
-    const sala = await createSalaWithProfesores(req.user, nombre, horaInicio, horaFin, profesorIds, activa);
+    const sala = await createSalaWithProfesores(
+      req.user,
+      nombre,
+      horaInicioValue,
+      horaFinValue,
+      profesorIds,
+      activa
+    );
     return res.status(201).json({ ok: true, data: sala });
   } catch (err) {
     console.error(err);
@@ -68,11 +85,29 @@ async function handleUpdateSala(req, res) {
     if (isNaN(id)) {
       return res.status(400).json({ ok: false, message: "ID de sala inválido" });
     }
-    const { nombre, horaInicio, horaFin, profesorIds, activa } = req.body;
-    if (!nombre || !horaInicio || !horaFin || activa === undefined) {
+    const {
+      nombre,
+      horaInicio,
+      horaFin,
+      hora_inicio,
+      hora_fin,
+      profesorIds,
+      activa,
+    } = req.body;
+    const horaInicioValue = horaInicio || hora_inicio;
+    const horaFinValue = horaFin || hora_fin;
+    if (!nombre || !horaInicioValue || !horaFinValue || activa === undefined) {
       return res.status(400).json({ ok: false, message: "Nombre, horario y activa son requeridos" });
     }
-    const sala = await updateSalaById(req.user, id, nombre, horaInicio, horaFin, profesorIds, activa);
+    const sala = await updateSalaById(
+      req.user,
+      id,
+      nombre,
+      horaInicioValue,
+      horaFinValue,
+      profesorIds,
+      activa
+    );
     if (!sala) {
       return res.status(404).json({ ok: false, message: "Sala no encontrada" });
     }
