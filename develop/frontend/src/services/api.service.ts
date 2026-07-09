@@ -1,6 +1,10 @@
 import type { Alumno, Sala, Profesor, ApiResponse, TomaAsistencia } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const rawApiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const normalizedApiBaseUrl = rawApiBaseUrl.replace(/\/+$/, '');
+const API_BASE_URL = normalizedApiBaseUrl.endsWith('/api')
+  ? normalizedApiBaseUrl
+  : `${normalizedApiBaseUrl}/api`;
 
 const getHeaders = (token: string) => ({
   'Content-Type': 'application/json',
