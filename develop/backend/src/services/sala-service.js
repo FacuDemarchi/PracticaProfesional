@@ -76,8 +76,8 @@ async function createSalaWithProfesores(user, nombre, horaInicio, horaFin, profe
   const client = await pool.connect();
   try {
     await client.query("begin");
-    const sala = await createSala(nombre, horaInicio, horaFin, activa);
-    await setProfesoresToSala(sala.id, profesorIds);
+    const sala = await createSala(nombre, horaInicio, horaFin, activa, client);
+    await setProfesoresToSala(sala.id, profesorIds, client);
     await client.query("commit");
     const profesores = await findProfesoresBySalaId(sala.id);
     return { ...sala, profesores };
@@ -103,9 +103,9 @@ async function updateSalaById(user, id, nombre, horaInicio, horaFin, profesorIds
   const client = await pool.connect();
   try {
     await client.query("begin");
-    const sala = await updateSala(id, nombre, horaInicio, horaFin, activa);
+    const sala = await updateSala(id, nombre, horaInicio, horaFin, activa, client);
     if (profesorIds !== undefined) {
-      await setProfesoresToSala(sala.id, profesorIds);
+      await setProfesoresToSala(sala.id, profesorIds, client);
     }
     await client.query("commit");
     const profesores = await findProfesoresBySalaId(sala.id);

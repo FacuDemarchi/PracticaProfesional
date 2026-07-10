@@ -15,16 +15,16 @@ async function findSalaByNombre(nombre) {
   return result.rows[0];
 }
 
-async function createSala(nombre, horaInicio, horaFin, activa = true) {
-  const result = await pool.query(
+async function createSala(nombre, horaInicio, horaFin, activa = true, dbClient = pool) {
+  const result = await dbClient.query(
     "insert into sala (nombre, hora_inicio, hora_fin, activa) values ($1, $2, $3, $4) returning *",
     [nombre, horaInicio, horaFin, activa]
   );
   return result.rows[0];
 }
 
-async function updateSala(id, nombre, horaInicio, horaFin, activa) {
-  const result = await pool.query(
+async function updateSala(id, nombre, horaInicio, horaFin, activa, dbClient = pool) {
+  const result = await dbClient.query(
     "update sala set nombre = $1, hora_inicio = $2, hora_fin = $3, activa = $4 where id = $5 returning *",
     [nombre, horaInicio, horaFin, activa, id]
   );
