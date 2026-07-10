@@ -57,6 +57,14 @@ export const apiService = {
     return handleResponse(response);
   },
 
+  async deleteAlumno(token: string, id: number): Promise<ApiResponse<void>> {
+    const response = await fetch(`${API_BASE_URL}/alumnos/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    });
+    return handleResponse(response);
+  },
+
   async getAlumnosBySalaId(token: string, salaId: number): Promise<ApiResponse<Alumno[]>> {
     const response = await fetch(`${API_BASE_URL}/salas/${salaId}/alumnos`, {
       headers: getHeaders(token),

@@ -20,6 +20,7 @@ const {
   handleGetAlumnoById,
   handleCreateAlumno,
   handleUpdateAlumno,
+  handleDeleteAlumno,
 } = require("../controllers/alumno-controller");
 const {
   handleGetAllTomaAsistencias,
@@ -52,6 +53,7 @@ router.get("/alumnos", authenticate, handleGetAlumnos);
 router.get("/alumnos/:id", authenticate, handleGetAlumnoById);
 router.post("/alumnos", authenticate, handleCreateAlumno);
 router.put("/alumnos/:id", authenticate, handleUpdateAlumno);
+router.delete("/alumnos/:id", authenticate, handleDeleteAlumno);
 router.get("/salas/:salaId/alumnos", authenticate, handleGetAlumnosBySalaId);
 
 router.get("/asistencias", authenticate, handleGetAllTomaAsistencias);

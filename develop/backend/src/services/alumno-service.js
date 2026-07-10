@@ -5,6 +5,7 @@ const {
   findAlumnoById,
   createAlumno,
   updateAlumno,
+  deleteAlumno,
 } = require("../repositories/alumno-repository");
 const { findSalaById } = require("../repositories/sala-repository");
 const { isProfesorAssignedToSala } = require("../repositories/sala-profesor-repository");
@@ -68,9 +69,26 @@ async function updateExistingAlumno(user, id, nombre, apellido, salaId, activo) 
   return await updateAlumno(id, nombre, apellido, salaId, activo);
 }
 
+async function deleteExistingAlumno(user, id) {
+  const existingAlumno = await findAlumnoById(id);
+  if (!existingAlumno) {
+    return null;
+  }
+
+  if (user.role === UserTypes.PROFESOR) {
+    const isAssigned = await isProfesorAssignedToSala(user.profesorId, existingAlumno.sala_id);
+    if (!isAssigned) {
+      throw new Error("No tienes permiso para eliminar este alumno");
+    }
+  }
+
+  return await deleteAlumno(id);
+}
+
 module.exports = {
   getAlumnos,
   getAlumnoById,
   createNewAlumno,
   updateExistingAlumno,
+  deleteExistingAlumno,
 };

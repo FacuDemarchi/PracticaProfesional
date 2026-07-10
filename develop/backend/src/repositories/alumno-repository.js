@@ -60,6 +60,11 @@ async function updateAlumno(id, nombre, apellido, salaId, activo) {
   return result.rows[0];
 }
 
+async function deleteAlumno(id) {
+  const result = await pool.query("delete from alumno where id = $1 returning *", [id]);
+  return result.rows[0];
+}
+
 module.exports = {
   findAllAlumnos,
   findAlumnosByProfesorId,
@@ -67,4 +72,5 @@ module.exports = {
   findAlumnoById,
   createAlumno,
   updateAlumno,
+  deleteAlumno,
 };

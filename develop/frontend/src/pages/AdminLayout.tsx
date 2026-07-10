@@ -13,7 +13,6 @@ export const AdminLayout = () => {
   };
 
   const navItems = [
-    { path: '/admin/alumnos', label: 'Alumnos' },
     { path: '/admin/salas', label: 'Salas' },
     { path: '/admin/profesores', label: 'Profesores' },
     { path: '/admin/historial', label: 'Historial' },

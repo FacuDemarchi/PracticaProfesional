@@ -3,6 +3,7 @@ const {
   getAlumnoById,
   createNewAlumno,
   updateExistingAlumno,
+  deleteExistingAlumno,
 } = require("../services/alumno-service");
 
 async function handleGetAlumnos(req, res) {
@@ -87,9 +88,38 @@ async function handleUpdateAlumno(req, res) {
   }
 }
 
+async function handleDeleteAlumno(req, res) {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ ok: false, message: "ID de alumno inválido" });
+    }
+
+    const alumno = await deleteExistingAlumno(req.user, id);
+    if (!alumno) {
+      return res.status(404).json({ ok: false, message: "Alumno no encontrado" });
+    }
+
+    return res.status(200).json({ ok: true, message: "Alumno eliminado exitosamente" });
+  } catch (err) {
+    console.error(err);
+    if (err.code === "23503") {
+      return res.status(400).json({
+        ok: false,
+        message: "No se puede eliminar el alumno porque tiene registros asociados",
+      });
+    }
+    if (err.message.includes("permiso") || err.message.includes("autorizado")) {
+      return res.status(403).json({ ok: false, message: err.message });
+    }
+    return res.status(500).json({ ok: false, message: "Error interno del servidor" });
+  }
+}
+
 module.exports = {
   handleGetAlumnos,
   handleGetAlumnoById,
   handleCreateAlumno,
   handleUpdateAlumno,
+  handleDeleteAlumno,
 };
