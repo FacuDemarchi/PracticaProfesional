@@ -5,10 +5,13 @@ import { apiService } from '../services/api.service';
 import type { Alumno, Sala } from '../types';
 
 export const AlumnoForm = () => {
-  const { token } = useSession();
+  const { token, user } = useSession();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = id && id !== 'nuevo';
+  const isProfesor = user?.role === 'profesor';
+  const backPath = isProfesor ? '/profesor/salas' : '/admin/salas';
+  const accentColor = isProfesor ? '#2d5016' : '#1a365d';
 
   const [formData, setFormData] = useState<Omit<Alumno, 'id' | 'sala'>>({
     nombre: '',
@@ -69,7 +72,7 @@ export const AlumnoForm = () => {
         await apiService.createAlumno(token, formData);
       }
 
-      navigate('/admin/alumnos');
+      navigate(backPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
@@ -92,10 +95,10 @@ export const AlumnoForm = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button onClick={() => navigate('/admin/alumnos')} style={styles.backBtn}>
+        <button onClick={() => navigate(backPath)} style={{ ...styles.backBtn, color: accentColor }}>
           ← Volver
         </button>
-        <h2 style={styles.title}>{isEdit ? 'Editar Alumno' : 'Nuevo Alumno'}</h2>
+        <h2 style={{ ...styles.title, color: accentColor }}>{isEdit ? 'Editar Alumno' : 'Nuevo Alumno'}</h2>
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
@@ -160,12 +163,12 @@ export const AlumnoForm = () => {
         <div style={styles.actions}>
           <button
             type="button"
-            onClick={() => navigate('/admin/alumnos')}
+            onClick={() => navigate(backPath)}
             style={styles.cancelBtn}
           >
             Cancelar
           </button>
-          <button type="submit" disabled={saving} style={styles.saveBtn}>
+          <button type="submit" disabled={saving} style={{ ...styles.saveBtn, backgroundColor: accentColor }}>
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
         </div>

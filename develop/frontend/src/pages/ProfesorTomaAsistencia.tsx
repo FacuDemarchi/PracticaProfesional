@@ -13,7 +13,7 @@ export const ProfesorTomaAsistencia = () => {
   const [tomaExistente, setTomaExistente] = useState<TomaAsistencia | null>(null);
   const [asistencias, setAsistencias] = useState<Record<number, boolean>>({});
   const [observaciones, setObservaciones] = useState<Record<number, string>>({});
-  const [fecha, setFecha] = useState<string>(new Date().toISOString().split('T')[0]);
+  const fecha = new Date().toISOString().split('T')[0];
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export const ProfesorTomaAsistencia = () => {
         setAlumnos(alumnosActivos);
         const initialAsistencias: Record<number, boolean> = {};
         alumnosActivos.forEach((a) => {
-          initialAsistencias[a.id] = true;
+          initialAsistencias[a.id] = false;
         });
         setAsistencias(initialAsistencias);
       } catch (err) {
@@ -51,7 +51,7 @@ export const ProfesorTomaAsistencia = () => {
     try {
       const detalles = alumnos.map((alumno) => ({
         alumnoId: alumno.id,
-        presente: asistencias[alumno.id] ?? true,
+        presente: asistencias[alumno.id] ?? false,
         observacion: observaciones[alumno.id],
       }));
       const response = await apiService.createOrUpdateTomaAsistencia(token, {
@@ -146,8 +146,8 @@ export const ProfesorTomaAsistencia = () => {
         <input
           type="date"
           value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+          readOnly
+          style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0', backgroundColor: '#f7fafc' }}
         />
       </div>
       {alumnos.length === 0 ? (
@@ -188,7 +188,7 @@ export const ProfesorTomaAsistencia = () => {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="checkbox"
-                    checked={asistencias[alumno.id] ?? true}
+                    checked={asistencias[alumno.id] ?? false}
                     onChange={(e) =>
                       setAsistencias({ ...asistencias, [alumno.id]: e.target.checked })
                     }

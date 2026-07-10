@@ -1,54 +1,55 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { useSession } from '../contexts/SessionContext';
 import { apiService } from '../services/api.service';
-import type { Sala, TomaAsistencia } from '../types';
+import type { TomaAsistencia } from '../types';
 
 export const ProfesorHistorial = () => {
   const { token } = useSession();
-  const [searchParams] = useSearchParams();
-  const salaIdParam = searchParams.get('salaId');
-  const [salas, setSalas] = useState<Sala[]>([]);
-  const [selectedSalaId, setSelectedSalaId] = useState<number | null>(
-    salaIdParam ? parseInt(salaIdParam) : null
-  );
   const [tomas, setTomas] = useState<TomaAsistencia[]>([]);
+  const [expandedTomaId, setExpandedTomaId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSalas = async () => {
-      if (!token) return;
+    const fetchHistorial = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
-        const response = await apiService.getSalas(token);
-        const salasData = response.data ?? [];
-        setSalas(salasData);
-        if (salasData.length > 0 && !selectedSalaId) {
-          setSelectedSalaId(salasData[0].id);
-        }
+        const response = await apiService.getHistorial(token);
+        setTomas(response.data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar las salas');
+        setError(err instanceof Error ? err.message : 'Error al cargar el historial');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSalas();
+    fetchHistorial();
   }, [token]);
 
-  useEffect(() => {
-    const fetchHistorial = async () => {
-      if (!token || !selectedSalaId) return;
-      try {
-        const response = await apiService.getTomaAsistenciasBySalaId(token, selectedSalaId);
-        setTomas(response.data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error al cargar el historial');
-      }
-    };
+  const tomasOrdenadas = useMemo(
+    () =>
+      [...tomas].sort((a, b) => {
+        const fechaA = a.fecha.split('T')[0];
+        const fechaB = b.fecha.split('T')[0];
+        const timestampA = new Date(`${fechaA}T${a.hora_creacion || '00:00:00'}`).getTime();
+        const timestampB = new Date(`${fechaB}T${b.hora_creacion || '00:00:00'}`).getTime();
+        return timestampB - timestampA;
+      }),
+    [tomas]
+  );
 
-    fetchHistorial();
-  }, [token, selectedSalaId]);
+  const formatFecha = (fecha: string) => {
+    const fechaBase = fecha.includes('T') ? fecha : `${fecha}T00:00:00`;
+    return new Date(fechaBase).toLocaleDateString('es-AR', {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -60,52 +61,53 @@ export const ProfesorHistorial = () => {
 
   return (
     <div>
-      <h2>Historial de Mi Sala</h2>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ marginRight: '0.5rem' }}>Seleccionar Sala:</label>
-        <select
-          value={selectedSalaId || ''}
-          onChange={(e) => setSelectedSalaId(e.target.value ? parseInt(e.target.value) : null)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: '0.375rem',
-            border: '1px solid #e2e8f0',
-            minWidth: '200px',
-          }}
-        >
-          {salas.map((sala) => (
-            <option key={sala.id} value={sala.id}>
-              {sala.nombre}
-            </option>
-          ))}
-        </select>
-      </div>
-      {tomas.length === 0 ? (
-        <p>No hay registros de asistencia para esta sala</p>
+      <h2>Historial</h2>
+      {tomasOrdenadas.length === 0 ? (
+        <p>No hay registros de asistencia cargados</p>
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
-          {tomas.map((toma) => {
+          {tomasOrdenadas.map((toma) => {
             const presentes = toma.detalles?.filter((d) => d.presente).length || 0;
             const total = toma.detalles?.length || 0;
             const presentesDetalle = toma.detalles?.filter((d) => d.presente) || [];
             const ausentesDetalle = toma.detalles?.filter((d) => !d.presente) || [];
+            const isExpanded = expandedTomaId === toma.id;
+
             return (
               <div
                 key={toma.id}
                 style={{
                   backgroundColor: 'white',
-                  padding: '1.5rem',
                   borderRadius: '0.5rem',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setExpandedTomaId(isExpanded ? null : toma.id)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '1.5rem',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
                   <div>
                     <h3 style={{ margin: '0 0 0.5rem 0' }}>
-                      Fecha: {toma.fecha}
+                      Fecha: {formatFecha(toma.fecha)}
                     </h3>
                     <p style={{ margin: '0.25rem 0', color: '#666' }}>
                       Hora: {toma.hora_creacion}
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0', color: '#666' }}>
+                      Sala: {toma.sala?.nombre || `Sala ${toma.sala_id}`}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -113,15 +115,23 @@ export const ProfesorHistorial = () => {
                       {presentes}/{total}
                     </p>
                     <p style={{ margin: 0, color: '#666' }}>Presentes</p>
+                    <p style={{ margin: '0.5rem 0 0', color: '#2d5016', fontWeight: 600 }}>
+                      {isExpanded ? 'Ocultar detalle' : 'Ver detalle'}
+                    </p>
                   </div>
-                </div>
-                {toma.detalles && toma.detalles.length > 0 && (
-                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
-                    <h4 style={{ margin: '0 0 0.5rem 0' }}>Detalle:</h4>
+                </button>
+                {isExpanded && toma.detalles && toma.detalles.length > 0 && (
+                  <div
+                    style={{
+                      padding: '0 1.5rem 1.5rem',
+                      borderTop: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <h4 style={{ margin: '1rem 0 0.5rem 0' }}>Detalle:</h4>
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                         gap: '1rem',
                       }}
                     >
@@ -168,6 +178,17 @@ export const ProfesorHistorial = () => {
                         )}
                       </div>
                     </div>
+                  </div>
+                )}
+                {isExpanded && (!toma.detalles || toma.detalles.length === 0) && (
+                  <div
+                    style={{
+                      padding: '1rem 1.5rem 1.5rem',
+                      borderTop: '1px solid #e2e8f0',
+                      color: '#666',
+                    }}
+                  >
+                    Sin detalle disponible para esta toma.
                   </div>
                 )}
               </div>

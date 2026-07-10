@@ -70,7 +70,13 @@ async function handleCreateOrUpdateTomaAsistencia(req, res) {
     if (err.message.includes("autorizado")) {
       return res.status(403).json({ ok: false, message: err.message });
     }
-    if (err.message.includes("no pertenece a la sala") || err.message.includes("no tiene profesores")) {
+    if (
+      err.message.includes("no pertenece a la sala") ||
+      err.message.includes("no tiene profesores") ||
+      err.message.includes("durante el horario de la clase") ||
+      err.message.includes("fecha actual") ||
+      err.message.includes("La sala no existe")
+    ) {
       return res.status(400).json({ ok: false, message: err.message });
     }
     return res.status(500).json({ ok: false, message: "Error interno del servidor" });

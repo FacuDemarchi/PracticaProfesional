@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '../contexts/SessionContext';
 import { apiService } from '../services/api.service';
-import type { Alumno, Sala, TomaAsistencia } from '../types';
+import type { Alumno, Sala } from '../types';
 
 type SalaFeedback = {
   type: 'success' | 'error';
@@ -10,13 +11,12 @@ type SalaFeedback = {
 
 export const ProfesorMisSalas = () => {
   const { token } = useSession();
+  const navigate = useNavigate();
   const [salas, setSalas] = useState<Sala[]>([]);
   const [expandedSalaId, setExpandedSalaId] = useState<number | null>(null);
   const [alumnosPorSala, setAlumnosPorSala] = useState<Record<number, Alumno[]>>({});
   const [loadingAlumnos, setLoadingAlumnos] = useState<Record<number, boolean>>({});
   const [errorAlumnos, setErrorAlumnos] = useState<Record<number, string>>({});
-  const [asistenciaPorSala, setAsistenciaPorSala] = useState<Record<number, Record<number, boolean>>>({});
-  const [savingAsistencia, setSavingAsistencia] = useState<Record<number, boolean>>({});
   const [processingAlumnoId, setProcessingAlumnoId] = useState<number | null>(null);
   const [feedbackPorSala, setFeedbackPorSala] = useState<Record<number, SalaFeedback | undefined>>({});
   const [loading, setLoading] = useState(true);
@@ -38,24 +38,6 @@ export const ProfesorMisSalas = () => {
     fetchSalas();
   }, [token]);
 
-  const getToday = () => new Date().toISOString().split('T')[0];
-
-  const buildAsistenciaInicial = (alumnos: Alumno[], tomaHoy?: TomaAsistencia) => {
-    const asistenciaInicial: Record<number, boolean> = {};
-
-    alumnos.forEach((alumno) => {
-      asistenciaInicial[alumno.id] = false;
-    });
-
-    if (tomaHoy?.detalles) {
-      tomaHoy.detalles.forEach((detalle) => {
-        asistenciaInicial[detalle.alumno_id] = detalle.presente;
-      });
-    }
-
-    return asistenciaInicial;
-  };
-
   const toggleSala = async (salaId: number) => {
     if (expandedSalaId === salaId) {
       setExpandedSalaId(null);
@@ -71,17 +53,9 @@ export const ProfesorMisSalas = () => {
     try {
       setLoadingAlumnos((prev) => ({ ...prev, [salaId]: true }));
       setErrorAlumnos((prev) => ({ ...prev, [salaId]: '' }));
-      const [alumnosResponse, historialResponse] = await Promise.all([
-        apiService.getAlumnosBySalaId(token, salaId),
-        apiService.getTomaAsistenciasBySalaId(token, salaId),
-      ]);
+      const alumnosResponse = await apiService.getAlumnosBySalaId(token, salaId);
       const alumnos = alumnosResponse.data || [];
-      const tomaHoy = (historialResponse.data || []).find((toma) => toma.fecha === getToday());
       setAlumnosPorSala((prev) => ({ ...prev, [salaId]: alumnos }));
-      setAsistenciaPorSala((prev) => ({
-        ...prev,
-        [salaId]: buildAsistenciaInicial(alumnos, tomaHoy),
-      }));
     } catch (err) {
       setErrorAlumnos((prev) => ({
         ...prev,
@@ -92,66 +66,11 @@ export const ProfesorMisSalas = () => {
     }
   };
 
-  const handleToggleAsistencia = (salaId: number, alumnoId: number, checked: boolean) => {
-    setAsistenciaPorSala((prev) => ({
-      ...prev,
-      [salaId]: {
-        ...(prev[salaId] || {}),
-        [alumnoId]: checked,
-      },
-    }));
-  };
-
-  const handleGuardarAsistencia = async (salaId: number) => {
-    if (!token) return;
-
-    const alumnos = alumnosPorSala[salaId] || [];
-    if (alumnos.length === 0) {
-      return;
-    }
-
-    try {
-      setSavingAsistencia((prev) => ({ ...prev, [salaId]: true }));
-      setFeedbackPorSala((prev) => ({ ...prev, [salaId]: undefined }));
-
-      const detalles = alumnos.map((alumno) => ({
-        alumnoId: alumno.id,
-        presente: asistenciaPorSala[salaId]?.[alumno.id] ?? false,
-      }));
-
-      await apiService.createOrUpdateTomaAsistencia(token, {
-        salaId,
-        fecha: getToday(),
-        detalles,
-      });
-
-      setFeedbackPorSala((prev) => ({
-        ...prev,
-        [salaId]: { type: 'success', message: 'Asistencia guardada correctamente' },
-      }));
-    } catch (err) {
-      setFeedbackPorSala((prev) => ({
-        ...prev,
-        [salaId]: {
-          type: 'error',
-          message: err instanceof Error ? err.message : 'Error al guardar la asistencia',
-        },
-      }));
-    } finally {
-      setSavingAsistencia((prev) => ({ ...prev, [salaId]: false }));
-    }
-  };
-
   const removeAlumnoFromSalaState = (salaId: number, alumnoId: number) => {
     setAlumnosPorSala((prev) => ({
       ...prev,
       [salaId]: (prev[salaId] || []).filter((alumno) => alumno.id !== alumnoId),
     }));
-    setAsistenciaPorSala((prev) => {
-      const asistenciaSala = { ...(prev[salaId] || {}) };
-      delete asistenciaSala[alumnoId];
-      return { ...prev, [salaId]: asistenciaSala };
-    });
   };
 
   const handleInactivarAlumno = async (salaId: number, alumno: Alumno) => {
@@ -233,7 +152,6 @@ export const ProfesorMisSalas = () => {
             const alumnosLoading = !!loadingAlumnos[sala.id];
             const alumnosError = errorAlumnos[sala.id];
             const feedback = feedbackPorSala[sala.id];
-            const isSavingAsistencia = !!savingAsistencia[sala.id];
 
             return (
               <div
@@ -289,21 +207,19 @@ export const ProfesorMisSalas = () => {
                     >
                       <h4 style={{ margin: 0, color: '#2d3748' }}>Alumnos</h4>
                       <button
-                        onClick={() => void handleGuardarAsistencia(sala.id)}
-                        disabled={isSavingAsistencia || alumnos.length === 0}
-                        style={{
-                          backgroundColor: '#2d5016',
-                          color: 'white',
-                          border: 'none',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '0.375rem',
-                          cursor: alumnos.length === 0 ? 'not-allowed' : 'pointer',
-                          opacity: alumnos.length === 0 ? 0.5 : 1,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {isSavingAsistencia ? 'Guardando...' : 'Guardar Asistencia'}
-                      </button>
+                          onClick={() => navigate(`/profesor/salas/${sala.id}/asistencia`)}
+                          style={{
+                            backgroundColor: '#2d5016',
+                            color: 'white',
+                            border: 'none',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.375rem',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Tomar Asistencia
+                        </button>
                     </div>
 
                     {feedback && (
@@ -327,33 +243,47 @@ export const ProfesorMisSalas = () => {
                     ) : alumnos.length === 0 ? (
                       <p style={{ margin: 0, color: '#666' }}>No hay alumnos asignados a esta sala</p>
                     ) : (
-                      <div style={{ display: 'grid', gap: '0.5rem' }}>
+                      <div
+                        style={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '0.375rem',
+                          overflow: 'hidden',
+                        }}
+                      >
                         {alumnos.map((alumno) => (
                           <div
                             key={alumno.id}
                             style={{
                               padding: '0.75rem 1rem',
-                              borderRadius: '0.375rem',
-                              backgroundColor: 'white',
-                              border: '1px solid #e2e8f0',
                               color: '#2d3748',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               gap: '1rem',
+                              borderBottom: '1px solid #e2e8f0',
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                              <input
-                                type="checkbox"
-                                checked={asistenciaPorSala[sala.id]?.[alumno.id] ?? false}
-                                onChange={(e) => handleToggleAsistencia(sala.id, alumno.id, e.target.checked)}
-                              />
+                            <div style={{ minWidth: 0 }}>
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {alumno.nombre} {alumno.apellido}
                               </span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                              <button
+                                onClick={() => navigate(`/profesor/alumnos/${alumno.id}`)}
+                                disabled={processingAlumnoId === alumno.id}
+                                style={{
+                                  backgroundColor: '#3182ce',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '0.45rem 0.75rem',
+                                  borderRadius: '0.375rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Editar
+                              </button>
                               <button
                                 onClick={() => void handleInactivarAlumno(sala.id, alumno)}
                                 disabled={processingAlumnoId === alumno.id}
@@ -366,7 +296,7 @@ export const ProfesorMisSalas = () => {
                                   cursor: 'pointer',
                                 }}
                               >
-                                Inactivar
+                                Inactivo
                               </button>
                               <button
                                 onClick={() => void handleEliminarAlumno(sala.id, alumno)}

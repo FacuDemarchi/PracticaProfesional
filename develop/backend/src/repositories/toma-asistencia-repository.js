@@ -21,7 +21,7 @@ async function findTomaAsistenciasBySalaId(salaId) {
     join sala s on ta.sala_id = s.id
     join profesor p on ta.creador_profesor_id = p.id
     where ta.sala_id = $1 
-    order by ta.fecha desc
+    order by ta.fecha desc, ta.hora_creacion desc
   `, [salaId]);
   return result.rows.map(row => ({
     ...row,
@@ -41,7 +41,7 @@ async function findTomaAsistenciasByProfesorId(profesorId) {
     join sala s on ta.sala_id = s.id
     join profesor p on ta.creador_profesor_id = p.id
     where ta.creador_profesor_id = $1 
-    order by ta.fecha desc
+    order by ta.fecha desc, ta.hora_creacion desc
   `, [profesorId]);
   return result.rows.map(row => ({
     ...row,
@@ -60,7 +60,7 @@ async function findAllTomaAsistencias() {
     from toma_asistencia ta
     join sala s on ta.sala_id = s.id
     join profesor p on ta.creador_profesor_id = p.id
-    order by ta.fecha desc
+    order by ta.fecha desc, ta.hora_creacion desc
   `);
   return result.rows.map(row => ({
     ...row,

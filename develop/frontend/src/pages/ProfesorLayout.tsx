@@ -15,7 +15,7 @@ export const ProfesorLayout = () => {
 
   const navItems = [
     { path: '/profesor/salas', label: 'Mis Salas' },
-    { path: '/profesor/historial', label: 'Historial de Mi Sala' },
+    { path: '/profesor/historial', label: 'Historial' },
     { path: '/profesor/alumnos/nuevo', label: 'Alta de Alumno' },
   ];
 

@@ -1,13 +1,42 @@
 const { pool } = require("../db/pool");
 
+function mapDetalleConAlumno(row) {
+  return {
+    ...row,
+    alumno: row.alumno_id
+      ? {
+          id: row.alumno_id,
+          nombre: row.alumno_nombre,
+          apellido: row.alumno_apellido,
+          sala_id: row.alumno_sala_id,
+          activo: row.alumno_activo,
+        }
+      : undefined,
+  };
+}
+
 async function findDetalleAsistenciaById(id) {
   const result = await pool.query("select * from detalle_asistencia where id = $1", [id]);
   return result.rows[0];
 }
 
 async function findDetallesByTomaAsistenciaId(tomaAsistenciaId) {
-  const result = await pool.query("select * from detalle_asistencia where toma_asistencia_id = $1", [tomaAsistenciaId]);
-  return result.rows;
+  const result = await pool.query(
+    `
+      select
+        da.*,
+        a.nombre as alumno_nombre,
+        a.apellido as alumno_apellido,
+        a.sala_id as alumno_sala_id,
+        a.activo as alumno_activo
+      from detalle_asistencia da
+      left join alumno a on a.id = da.alumno_id
+      where da.toma_asistencia_id = $1
+      order by a.apellido nulls last, a.nombre nulls last, da.id
+    `,
+    [tomaAsistenciaId]
+  );
+  return result.rows.map(mapDetalleConAlumno);
 }
 
 async function createDetalleAsistencia(tomaAsistenciaId, alumnoId, presente, observacion = null) {
@@ -45,8 +74,22 @@ async function upsertDetallesForToma(tomaAsistenciaId, detalles) {
     await client.query("commit");
     
     // Return the new detalles
-    const result = await pool.query("select * from detalle_asistencia where toma_asistencia_id = $1", [tomaAsistenciaId]);
-    return result.rows;
+    const result = await pool.query(
+      `
+        select
+          da.*,
+          a.nombre as alumno_nombre,
+          a.apellido as alumno_apellido,
+          a.sala_id as alumno_sala_id,
+          a.activo as alumno_activo
+        from detalle_asistencia da
+        left join alumno a on a.id = da.alumno_id
+        where da.toma_asistencia_id = $1
+        order by a.apellido nulls last, a.nombre nulls last, da.id
+      `,
+      [tomaAsistenciaId]
+    );
+    return result.rows.map(mapDetalleConAlumno);
   } catch (err) {
     await client.query("rollback");
     throw err;

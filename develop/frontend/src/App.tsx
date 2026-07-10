@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { AdminLayout } from './pages/AdminLayout';
+import { AlumnoForm } from './pages/AlumnoForm';
 import { SalasList } from './pages/SalasList';
 import { SalaForm } from './pages/SalaForm';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -48,6 +49,7 @@ function App() {
         <Route path="salas/:salaId/asistencia" element={<ProfesorTomaAsistencia />} />
         <Route path="historial" element={<ProfesorHistorial />} />
         <Route path="alumnos/nuevo" element={<ProfesorAltaAlumno />} />
+        <Route path="alumnos/:id" element={<AlumnoForm />} />
       </Route>
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>

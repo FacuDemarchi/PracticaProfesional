@@ -9,6 +9,7 @@ const {
   updateTomaAsistencia,
   deleteTomaAsistencia,
 } = require("../repositories/toma-asistencia-repository");
+const { findSalaById } = require("../repositories/sala-repository");
 const {
   findDetalleAsistenciaById,
   findDetallesByTomaAsistenciaId,
@@ -32,10 +33,54 @@ function checkAdmin(user) {
   }
 }
 
+function getCurrentArgentinaDateTimeParts() {
+  const formatter = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const getPart = (type) => parts.find((part) => part.type === type)?.value || "00";
+
+  return {
+    date: `${getPart("year")}-${getPart("month")}-${getPart("day")}`,
+    time: `${getPart("hour")}:${getPart("minute")}:${getPart("second")}`,
+  };
+}
+
+async function validateProfesorHorario(salaId, fecha, userRole) {
+  if (userRole !== UserTypes.PROFESOR) {
+    return;
+  }
+
+  const sala = await findSalaById(salaId);
+  if (!sala) {
+    throw new Error("La sala no existe");
+  }
+
+  const now = getCurrentArgentinaDateTimeParts();
+  if (fecha !== now.date) {
+    throw new Error("Solo puedes tomar asistencia en la fecha actual");
+  }
+
+  if (now.time < sala.hora_inicio || now.time > sala.hora_fin) {
+    throw new Error("La asistencia solo puede tomarse durante el horario de la clase");
+  }
+}
+
 async function getAllTomaAsistencias(user) {
-  checkAdmin(user);
-  
-  const tomas = await findAllTomaAsistencias();
+  checkProfesorOrAdmin(user);
+
+  const tomas =
+    user.role === UserTypes.PROFESOR
+      ? await findTomaAsistenciasByProfesorId(user.profesorId)
+      : await findAllTomaAsistencias();
   const tomasConDetalles = [];
   for (const toma of tomas) {
     const detalles = await findDetallesByTomaAsistenciaId(toma.id);
@@ -91,6 +136,8 @@ async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles) {
       throw new Error("No autorizado: no tienes acceso a esta sala");
     }
   }
+
+  await validateProfesorHorario(salaId, fecha, user.role);
   
   const alumnos = await findAlumnosBySalaId(salaId);
   const alumnoIds = alumnos.map(a => a.id);
