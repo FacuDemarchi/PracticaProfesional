@@ -4,6 +4,20 @@ import { useSession } from '../contexts/SessionContext';
 import { apiService } from '../services/api.service';
 import type { Alumno, Sala, TomaAsistencia } from '../types';
 
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatLocalTime = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+};
+
 export const ProfesorTomaAsistencia = () => {
   const { salaId } = useParams<{ salaId: string }>();
   const { token } = useSession();
@@ -13,7 +27,7 @@ export const ProfesorTomaAsistencia = () => {
   const [tomaExistente, setTomaExistente] = useState<TomaAsistencia | null>(null);
   const [asistencias, setAsistencias] = useState<Record<number, boolean>>({});
   const [observaciones, setObservaciones] = useState<Record<number, string>>({});
-  const fecha = new Date().toISOString().split('T')[0];
+  const fecha = formatLocalDate(new Date());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +63,7 @@ export const ProfesorTomaAsistencia = () => {
     if (!token || !salaId) return;
     setSaving(true);
     try {
+      const now = new Date();
       const detalles = alumnos.map((alumno) => ({
         alumnoId: alumno.id,
         presente: asistencias[alumno.id] ?? false,
@@ -57,6 +72,8 @@ export const ProfesorTomaAsistencia = () => {
       const response = await apiService.createOrUpdateTomaAsistencia(token, {
         salaId: parseInt(salaId),
         fecha,
+        fechaActual: formatLocalDate(now),
+        horaActual: formatLocalTime(now),
         detalles,
       });
       setTomaExistente(response.data || null);

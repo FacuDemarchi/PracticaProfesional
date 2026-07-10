@@ -59,11 +59,18 @@ async function handleGetTomaAsistenciasBySalaId(req, res) {
 
 async function handleCreateOrUpdateTomaAsistencia(req, res) {
   try {
-    const { salaId, fecha, detalles } = req.body;
+    const { salaId, fecha, detalles, fechaActual, horaActual } = req.body;
     if (!salaId || !fecha || !detalles) {
       return res.status(400).json({ ok: false, message: "salaId, fecha y detalles son requeridos" });
     }
-    const toma = await createOrUpdateTomaAsistencia(req.user, salaId, fecha, detalles);
+    const toma = await createOrUpdateTomaAsistencia(
+      req.user,
+      salaId,
+      fecha,
+      detalles,
+      fechaActual,
+      horaActual
+    );
     return res.status(201).json({ ok: true, data: toma });
   } catch (err) {
     console.error(err);

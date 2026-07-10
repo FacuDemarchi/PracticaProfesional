@@ -102,35 +102,6 @@ export const ProfesorMisSalas = () => {
     }
   };
 
-  const handleEliminarAlumno = async (salaId: number, alumno: Alumno) => {
-    if (!token) return;
-
-    const confirmed = window.confirm(`Eliminar a ${alumno.nombre} ${alumno.apellido}?`);
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setProcessingAlumnoId(alumno.id);
-      await apiService.deleteAlumno(token, alumno.id);
-      removeAlumnoFromSalaState(salaId, alumno.id);
-      setFeedbackPorSala((prev) => ({
-        ...prev,
-        [salaId]: { type: 'success', message: 'Alumno eliminado correctamente' },
-      }));
-    } catch (err) {
-      setFeedbackPorSala((prev) => ({
-        ...prev,
-        [salaId]: {
-          type: 'error',
-          message: err instanceof Error ? err.message : 'Error al eliminar el alumno',
-        },
-      }));
-    } finally {
-      setProcessingAlumnoId(null);
-    }
-  };
-
   if (loading) {
     return <div>Cargando...</div>;
   }
@@ -297,20 +268,6 @@ export const ProfesorMisSalas = () => {
                                 }}
                               >
                                 Inactivo
-                              </button>
-                              <button
-                                onClick={() => void handleEliminarAlumno(sala.id, alumno)}
-                                disabled={processingAlumnoId === alumno.id}
-                                style={{
-                                  backgroundColor: '#e53e3e',
-                                  color: 'white',
-                                  border: 'none',
-                                  padding: '0.45rem 0.75rem',
-                                  borderRadius: '0.375rem',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Eliminar
                               </button>
                             </div>
                           </div>

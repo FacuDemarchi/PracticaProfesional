@@ -54,7 +54,34 @@ function getCurrentArgentinaDateTimeParts() {
   };
 }
 
-async function validateProfesorHorario(salaId, fecha, userRole) {
+function normalizeClientTime(time) {
+  if (!time || typeof time !== "string") {
+    return null;
+  }
+
+  const parts = time.split(":");
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const [hours = "00", minutes = "00", seconds = "00"] = parts;
+  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:${seconds.padStart(2, "0")}`;
+}
+
+function getRequestDateTimeParts(fechaActual, horaActual) {
+  const normalizedTime = normalizeClientTime(horaActual);
+
+  if (fechaActual && normalizedTime) {
+    return {
+      date: fechaActual,
+      time: normalizedTime,
+    };
+  }
+
+  return getCurrentArgentinaDateTimeParts();
+}
+
+async function validateProfesorHorario(salaId, fecha, userRole, fechaActual, horaActual) {
   if (userRole !== UserTypes.PROFESOR) {
     return;
   }
@@ -64,7 +91,7 @@ async function validateProfesorHorario(salaId, fecha, userRole) {
     throw new Error("La sala no existe");
   }
 
-  const now = getCurrentArgentinaDateTimeParts();
+  const now = getRequestDateTimeParts(fechaActual, horaActual);
   if (fecha !== now.date) {
     throw new Error("Solo puedes tomar asistencia en la fecha actual");
   }
@@ -126,7 +153,7 @@ async function getTomaAsistenciasBySalaId(user, salaId) {
   return tomasConDetalles;
 }
 
-async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles) {
+async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles, fechaActual, horaActual) {
   checkProfesorOrAdmin(user);
   
   if (user.role === UserTypes.PROFESOR) {
@@ -137,7 +164,9 @@ async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles) {
     }
   }
 
-  await validateProfesorHorario(salaId, fecha, user.role);
+  const requestDateTime = getRequestDateTimeParts(fechaActual, horaActual);
+
+  await validateProfesorHorario(salaId, fecha, user.role, requestDateTime.date, requestDateTime.time);
   
   const alumnos = await findAlumnosBySalaId(salaId);
   const alumnoIds = alumnos.map(a => a.id);
@@ -154,8 +183,7 @@ async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles) {
     await client.query("begin");
     
     let toma = await findTomaAsistenciaBySalaAndFecha(salaId, fecha);
-    const now = new Date();
-    const horaCreacion = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    const horaCreacion = requestDateTime.time;
     
     if (!toma) {
       // Create new toma
@@ -181,7 +209,7 @@ async function createOrUpdateTomaAsistencia(user, salaId, fecha, detalles) {
     } else {
       // Check if profesor can modify (only same day)
       if (user.role === UserTypes.PROFESOR) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = requestDateTime.date;
         if (fecha !== today) {
           throw new Error("No autorizado: solo puedes modificar tomas del día de hoy");
         }

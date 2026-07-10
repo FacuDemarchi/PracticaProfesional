@@ -188,6 +188,8 @@ export const apiService = {
   async createOrUpdateTomaAsistencia(token: string, data: {
     salaId: number;
     fecha: string;
+    fechaActual?: string;
+    horaActual?: string;
     detalles: { alumnoId: number; presente: boolean; observacion?: string }[];
   }): Promise<ApiResponse<TomaAsistencia>> {
     const response = await fetch(`${API_BASE_URL}/asistencias`, {
